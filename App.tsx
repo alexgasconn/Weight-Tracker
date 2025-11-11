@@ -55,7 +55,7 @@ const App: React.FC = () => {
     };
 
     const fetchData = async () => {
-      const sheetUrl = 'https://docs.google.com/spreadsheets/d/1gRUepiT53rgoV1W-FxAADv_Olus2yOVQ1vMMskE3dcE/export?format=csv&gid=0';
+      const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHBxexfNwpTBj3uAfTsa-3Y3ZUK7d88pfQBroQdkVtHHABVCvoWVsQdim3MtbQjOCgGukDvqiO3hOB/pub?gid=0&single=true&output=csv';
       try {
         setLoading(true);
         const response = await fetch(sheetUrl);
