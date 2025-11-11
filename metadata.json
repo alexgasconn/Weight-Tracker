@@ -1,0 +1,5 @@
+{
+  "name": "Weight Dashboard",
+  "description": "A responsive dashboard to visualize weight data from a Google Sheet, featuring an interactive trend chart.",
+  "requestFramePermissions": []
+}
