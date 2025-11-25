@@ -1,209 +1,216 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import type { DailyLog, WeightRangeData } from './types';
-import StatCard from './components/StatCard';
+import React, { useEffect, useState, useMemo } from 'react';
+import { fetchWeightData, getDemoData } from './services/dataService';
+import { WeightRecord, TimeRange } from './types';
+import StatsCard from './components/StatsCard';
 import WeightChart from './components/WeightChart';
-import DataTable from './components/DataTable';
-import WeeklyRangeChart from './components/WeeklyRangeChart';
+import AggregatedStats from './components/AggregatedStats';
+import AdvancedAnalytics from './components/AdvancedAnalytics';
+import BmiSection from './components/BmiSection';
+import { formatNumber } from './utils/formatUtils';
 
-const App: React.FC = () => {
-  const [logs, setLogs] = useState<DailyLog[]>([]);
+// Icons
+const ScaleIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" /></svg>;
+const TrendIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>;
+const CalendarIcon = () => <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>;
+
+function App() {
+  const [data, setData] = useState<WeightRecord[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [groupingPeriod, setGroupingPeriod] = useState<number>(7);
+  const [timeRange, setTimeRange] = useState<TimeRange>(TimeRange.ALL);
+  const [usingDemoData, setUsingDemoData] = useState<boolean>(false);
 
   useEffect(() => {
-    const parseData = (csvText: string): DailyLog[] => {
-      console.log('CSV preview:', csvText.slice(0, 1000)); // debug
-      const lines = csvText.trim().replace(/\r\n/g, '\n').split('\n');
-      const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-
-      // Accept several possible header names (SPAN/ENG)
-      const diaCols = ['dia', 'day', 'date'];
-      const pesCols = ['pes', 'peso', 'weight', 'wt'];
-      const tendencyCols = ['tendency', 'tendencia', 'tend'];
-
-      const diaIndex = headers.findIndex(h => diaCols.includes(h));
-      const pesIndex = headers.findIndex(h => pesCols.includes(h));
-      const tendencyIndex = headers.findIndex(h => tendencyCols.includes(h));
-
-      if (diaIndex === -1 || pesIndex === -1 || tendencyIndex === -1) {
-        console.error('CSV headers found:', headers);
-        throw new Error('CSV must include columns: Dia/Day/Date, Pes/Weight, and Tendency (header names are flexible). Found: ' + headers.join(', '));
-      }
-
-      const data = lines.slice(1).map(line => {
-        const values = line.split(',');
-        const dateStr = values[diaIndex];
-        if (!dateStr || dateStr.trim() === '') return null;
-
-        // try several date formats: dd/MM/yyyy or yyyy-MM-dd
-        let date: Date | null = null;
-        if (dateStr.includes('/')) {
-          const parts = dateStr.split('/');
-          if (parts.length === 3) {
-            const [day, month, year] = parts.map(Number);
-            date = new Date(year, month - 1, day);
-          }
-        } else if (dateStr.includes('-')) {
-          const d = new Date(dateStr);
-          if (!isNaN(d.getTime())) date = d;
-        }
-        if (!date || isNaN(date.getTime())) return null;
-
-        const safeParseFloat = (val: string | undefined) => {
-          if (!val || val.trim() === '') return null;
-          const v = parseFloat(val.replace(',', '.'));
-          return isNaN(v) ? null : v;
-        };
-
-        return {
-          date,
-          dateString: date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }),
-          weight: safeParseFloat(values[pesIndex]),
-          tendency: safeParseFloat(values[tendencyIndex]),
-        };
-      }).filter((log): log is DailyLog => log !== null);
-
-      return data.sort((a, b) => a.date.getTime() - b.date.getTime());
-    };
-
-    const fetchData = async () => {
-      const sheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQHBxexfNwpTBj3uAfTsa-3Y3ZUK7d88pfQBroQdkVtHHABVCvoWVsQdim3MtbQjOCgGukDvqiO3hOB/pub?gid=0&single=true&output=csv';
-      try {
-        setLoading(true);
-        const response = await fetch(sheetUrl);
-        console.log('fetch status', response.status, response.statusText);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch CSV: ${response.status} ${response.statusText}`);
-        }
-        const csvText = await response.text();
-        console.log('CSV length:', csvText.length);
-        const parsedData = parseData(csvText);
-        setLogs(parsedData);
-      } catch (err: any) {
-        console.error('Load error:', err);
-        setError(err.message || String(err));
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
+    loadData();
   }, []);
 
+  const loadData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const records = await fetchWeightData();
+      if (records.length === 0) throw new Error("No data found");
+      setData(records);
+      setUsingDemoData(false);
+    } catch (err) {
+      console.error(err);
+      setError("No s'ha pogut connectar amb el Google Sheet (possiblement per CORS). Mostrant dades de demostració.");
+      const demo = getDemoData();
+      setData(demo);
+      setUsingDemoData(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Compute Statistics
   const stats = useMemo(() => {
-    if (logs.length === 0) return null;
+    if (data.length === 0) return null;
 
-    const weightLogs = logs.filter(log => log.weight !== null);
-    if (weightLogs.length === 0) return null;
+    const currentRecord = data[data.length - 1];
+    const current = currentRecord.weight;
+    const currentBmi = currentRecord.bmi;
+    
+    const start = data[0].weight;
+    const totalChange = current - start;
+    
+    // Last 30 days change
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const recentRecords = data.filter(d => d.date >= thirtyDaysAgo);
+    const monthAvg = recentRecords.length ? recentRecords.reduce((a, b) => a + b.weight, 0) / recentRecords.length : current;
 
-    const firstWeight = weightLogs[0]?.weight ?? 0;
-    const currentWeight = weightLogs[weightLogs.length - 1]?.weight ?? 0;
-    const weightChange = currentWeight - firstWeight;
+    const min = Math.min(...data.map(d => d.weight));
+    const max = Math.max(...data.map(d => d.weight));
 
     return {
-      currentWeight,
-      weightChange,
-      firstWeight,
-      daysTracked: logs.length
+      current,
+      currentBmi,
+      start,
+      totalChange,
+      monthAvg,
+      min,
+      max
     };
-  }, [logs]);
-
-  const rangeData = useMemo<WeightRangeData[]>(() => {
-    const weightLogs = logs.filter(log => typeof log.weight === 'number');
-    if (weightLogs.length === 0) return [];
-
-    const chunks: DailyLog[][] = [];
-    for (let i = 0; i < weightLogs.length; i += groupingPeriod) {
-      chunks.push(weightLogs.slice(i, i + groupingPeriod));
-    }
-
-    return chunks.map((chunk) => {
-      const weights = chunk.map(log => log.weight!);
-      const minWeight = Math.min(...weights);
-      const maxWeight = Math.max(...weights);
-      const firstDate = chunk[0].dateString;
-
-      return {
-        periodLabel: firstDate,
-        range: [minWeight, maxWeight]
-      };
-    });
-  }, [logs, groupingPeriod]);
-
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-primary">
-        <p className="text-2xl text-slate-400 animate-pulse">Cargando datos del panel...</p>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-primary">
-        <p className="text-2xl text-red-400">Error: {error}</p>
-      </div>
-    );
-  }
-
-  if (!stats) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-primary">
-        <p className="text-2xl text-slate-400">No hay datos de peso para mostrar.</p>
-      </div>
-    );
-  }
+  }, [data]);
 
   return (
-    <div className="min-h-screen bg-primary p-4 sm:p-6 lg:p-8">
-      <div className="max-w-7xl mx-auto">
-        <header className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">Panel de Peso</h1>
-          <p className="text-slate-400 mt-1">Un resumen visual de tu progreso.</p>
-        </header>
-
-        <main>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <StatCard title="Peso Actual" value={stats.currentWeight.toFixed(2)} unit="kg" />
-            <StatCard title="Cambio Total" value={stats.weightChange.toFixed(2)} unit="kg" trend={stats.weightChange > 0 ? 'up' : 'down'} />
-            <StatCard title="Peso Inicial" value={stats.firstWeight.toFixed(2)} unit="kg" />
-            <StatCard title="Días Registrados" value={stats.daysTracked} />
+    <div className="min-h-screen bg-gray-50 text-gray-800 pb-12 font-sans">
+      {/* Header */}
+      <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="p-2 bg-blue-600 rounded-lg text-white shadow-md">
+              <ScaleIcon />
+            </div>
+            <h1 className="text-xl font-bold text-gray-900 tracking-tight">Seguiment de Pes</h1>
           </div>
+          {usingDemoData && (
+             <span className="px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full border border-yellow-200">
+               Mode Demostració
+             </span>
+          )}
+        </div>
+      </header>
 
-          <div className="bg-secondary rounded-xl p-4 sm:p-6 shadow-lg mb-8">
-            <h2 className="text-xl font-semibold text-white mb-4">Evolución del Peso</h2>
-            <WeightChart data={logs} />
-          </div>
-
-          <div className="bg-secondary rounded-xl p-4 sm:p-6 shadow-lg mb-8">
-            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-4">
-              <h2 className="text-xl font-semibold text-white">Rango de Peso (Mín/Máx)</h2>
-              <div className="flex items-center space-x-2 bg-primary p-1 rounded-lg">
-                {[7, 14, 30].map(period => (
-                  <button
-                    key={period}
-                    onClick={() => setGroupingPeriod(period)}
-                    className={`px-3 py-1 text-sm font-medium rounded-md transition-colors duration-200 ${groupingPeriod === period ? 'bg-accent text-white shadow' : 'text-slate-300 hover:bg-slate-700'}`}
-                  >
-                    {period} días
-                  </button>
-                ))}
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 space-y-8">
+        
+        {/* Error Notification */}
+        {error && (
+          <div className="bg-orange-50 border-l-4 border-orange-400 p-4 rounded-md shadow-sm flex justify-between items-center">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-orange-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="ml-3">
+                <p className="text-sm text-orange-700">{error}</p>
               </div>
             </div>
-            <WeeklyRangeChart data={rangeData} />
+            <button onClick={loadData} className="text-sm text-orange-600 hover:text-orange-800 underline font-medium">Reintentar</button>
           </div>
+        )}
 
-          <div className="bg-secondary rounded-xl p-4 sm:p-6 shadow-lg">
-            <h2 className="text-xl font-semibold text-white mb-4">Registro Completo</h2>
-            <DataTable data={logs} />
+        {loading ? (
+          <div className="h-64 flex flex-col items-center justify-center space-y-4">
+            <div className="w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+            <p className="text-gray-500 animate-pulse">Carregant dades...</p>
           </div>
-        </main>
-        <footer className="text-center mt-8 text-slate-500 text-sm">
-          <p>Dashboard de Peso con React y Google Sheets.</p>
-        </footer>
-      </div>
+        ) : stats ? (
+          <>
+            {/* Top Stats Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <StatsCard 
+                title="Pes Actual" 
+                value={`${formatNumber(stats.current)} kg`}
+                subtitle={`${stats.totalChange > 0 ? '+' : ''}${formatNumber(stats.totalChange)} kg des de l'inici`}
+                trend={stats.totalChange < 0 ? 'down' : stats.totalChange > 0 ? 'up' : 'neutral'}
+                color="blue"
+                icon={<ScaleIcon />}
+              />
+              <StatsCard 
+                title="Mitjana (30 dies)" 
+                value={`${formatNumber(stats.monthAvg)} kg`}
+                subtitle="Últim mes"
+                color="purple"
+                icon={<CalendarIcon />}
+              />
+              <StatsCard 
+                title="Mínim Assolit" 
+                value={`${formatNumber(stats.min)} kg`}
+                subtitle="Millor registre"
+                color="green"
+                trend="down"
+              />
+              <StatsCard 
+                title="Màxim Registrat" 
+                value={`${formatNumber(stats.max)} kg`}
+                subtitle="Pic històric"
+                color="red"
+                trend="up"
+              />
+            </div>
+
+            {/* Main Chart Section */}
+            <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
+                <div>
+                  <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <TrendIcon />
+                    Evolució del Pes
+                  </h2>
+                  <p className="text-sm text-gray-500">Tendència diària i suavitzat</p>
+                </div>
+                
+                {/* Time Range Selector */}
+                <div className="bg-gray-100 p-1 rounded-lg inline-flex self-start sm:self-center">
+                  {[
+                    { label: '1 Mes', value: TimeRange.MONTH1 },
+                    { label: '3 Mesos', value: TimeRange.MONTH3 },
+                    { label: '1 Any', value: TimeRange.YEAR1 },
+                    { label: 'Tot', value: TimeRange.ALL },
+                  ].map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => setTimeRange(option.value)}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+                        timeRange === option.value
+                          ? 'bg-white text-blue-600 shadow-sm'
+                          : 'text-gray-500 hover:text-gray-900'
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <WeightChart data={data} timeRange={timeRange} />
+            </section>
+
+            {/* Advanced Analytics Section */}
+            <section>
+               <AdvancedAnalytics data={data} />
+            </section>
+            
+            {/* BMI Section (Moved down as requested) */}
+            <section>
+              <BmiSection data={data} currentBmi={stats.currentBmi!} />
+            </section>
+
+            {/* Aggregated Stats Table Section */}
+            <section>
+              <AggregatedStats data={data} />
+            </section>
+
+          </>
+        ) : (
+          <div className="text-center py-20">
+             <p className="text-gray-500">No s'han trobat dades vàlides al full de càlcul.</p>
+          </div>
+        )}
+      </main>
     </div>
   );
 }

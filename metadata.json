@@ -1,5 +1,5 @@
 {
-  "name": "Weight Dashboard",
-  "description": "A responsive dashboard to visualize weight data from a Google Sheet, featuring an interactive trend chart.",
+  "name": "Seguiment de Pes",
+  "description": "Un tauler de control per visualitzar i analitzar el progrés del pes corporal basat en Google Sheets, amb anàlisi intel·ligent de tendències.",
   "requestFramePermissions": []
 }
