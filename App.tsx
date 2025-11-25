@@ -13,15 +13,22 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const parseData = (csvText: string): DailyLog[] => {
+      console.log('CSV preview:', csvText.slice(0, 1000)); // debug
       const lines = csvText.trim().replace(/\r\n/g, '\n').split('\n');
       const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
-      
-      const diaIndex = headers.indexOf('dia');
-      const pesIndex = headers.indexOf('pes');
-      const tendencyIndex = headers.indexOf('tendency');
+
+      // Accept several possible header names (SPAN/ENG)
+      const diaCols = ['dia', 'day', 'date'];
+      const pesCols = ['pes', 'peso', 'weight', 'wt'];
+      const tendencyCols = ['tendency', 'tendencia', 'tend'];
+
+      const diaIndex = headers.findIndex(h => diaCols.includes(h));
+      const pesIndex = headers.findIndex(h => pesCols.includes(h));
+      const tendencyIndex = headers.findIndex(h => tendencyCols.includes(h));
 
       if (diaIndex === -1 || pesIndex === -1 || tendencyIndex === -1) {
-        throw new Error('Las cabeceras del CSV deben incluir: Dia, Pes, Tendency');
+        console.error('CSV headers found:', headers);
+        throw new Error('CSV must include columns: Dia/Day/Date, Pes/Weight, and Tendency (header names are flexible). Found: ' + headers.join(', '));
       }
 
       const data = lines.slice(1).map(line => {
@@ -29,18 +36,24 @@ const App: React.FC = () => {
         const dateStr = values[diaIndex];
         if (!dateStr || dateStr.trim() === '') return null;
 
-        const dateParts = dateStr.split('/');
-        if (dateParts.length !== 3) return null;
-        
-        const [day, month, year] = dateParts.map(Number);
-        if (isNaN(day) || isNaN(month) || isNaN(year) || year < 2000) return null;
-
-        const date = new Date(year, month - 1, day);
-        if (isNaN(date.getTime())) return null;
+        // try several date formats: dd/MM/yyyy or yyyy-MM-dd
+        let date: Date | null = null;
+        if (dateStr.includes('/')) {
+          const parts = dateStr.split('/');
+          if (parts.length === 3) {
+            const [day, month, year] = parts.map(Number);
+            date = new Date(year, month - 1, day);
+          }
+        } else if (dateStr.includes('-')) {
+          const d = new Date(dateStr);
+          if (!isNaN(d.getTime())) date = d;
+        }
+        if (!date || isNaN(date.getTime())) return null;
 
         const safeParseFloat = (val: string | undefined) => {
           if (!val || val.trim() === '') return null;
-          return parseFloat(val.replace(',', '.'));
+          const v = parseFloat(val.replace(',', '.'));
+          return isNaN(v) ? null : v;
         };
 
         return {
@@ -59,14 +72,17 @@ const App: React.FC = () => {
       try {
         setLoading(true);
         const response = await fetch(sheetUrl);
+        console.log('fetch status', response.status, response.statusText);
         if (!response.ok) {
-          throw new Error(`Error al cargar los datos: ${response.statusText}`);
+          throw new Error(`Failed to fetch CSV: ${response.status} ${response.statusText}`);
         }
         const csvText = await response.text();
+        console.log('CSV length:', csvText.length);
         const parsedData = parseData(csvText);
         setLogs(parsedData);
       } catch (err: any) {
-        setError(err.message);
+        console.error('Load error:', err);
+        setError(err.message || String(err));
       } finally {
         setLoading(false);
       }
@@ -77,14 +93,14 @@ const App: React.FC = () => {
 
   const stats = useMemo(() => {
     if (logs.length === 0) return null;
-    
+
     const weightLogs = logs.filter(log => log.weight !== null);
     if (weightLogs.length === 0) return null;
-    
+
     const firstWeight = weightLogs[0]?.weight ?? 0;
     const currentWeight = weightLogs[weightLogs.length - 1]?.weight ?? 0;
     const weightChange = currentWeight - firstWeight;
-    
+
     return {
       currentWeight,
       weightChange,
@@ -99,19 +115,19 @@ const App: React.FC = () => {
 
     const chunks: DailyLog[][] = [];
     for (let i = 0; i < weightLogs.length; i += groupingPeriod) {
-        chunks.push(weightLogs.slice(i, i + groupingPeriod));
+      chunks.push(weightLogs.slice(i, i + groupingPeriod));
     }
 
     return chunks.map((chunk) => {
-        const weights = chunk.map(log => log.weight!);
-        const minWeight = Math.min(...weights);
-        const maxWeight = Math.max(...weights);
-        const firstDate = chunk[0].dateString;
-        
-        return {
-            periodLabel: firstDate,
-            range: [minWeight, maxWeight]
-        };
+      const weights = chunk.map(log => log.weight!);
+      const minWeight = Math.min(...weights);
+      const maxWeight = Math.max(...weights);
+      const firstDate = chunk[0].dateString;
+
+      return {
+        periodLabel: firstDate,
+        range: [minWeight, maxWeight]
+      };
     });
   }, [logs, groupingPeriod]);
 
@@ -123,7 +139,7 @@ const App: React.FC = () => {
       </div>
     );
   }
-  
+
   if (error) {
     return (
       <div className="flex items-center justify-center h-screen bg-primary">
@@ -131,9 +147,9 @@ const App: React.FC = () => {
       </div>
     );
   }
-  
+
   if (!stats) {
-     return (
+    return (
       <div className="flex items-center justify-center h-screen bg-primary">
         <p className="text-2xl text-slate-400">No hay datos de peso para mostrar.</p>
       </div>
@@ -147,7 +163,7 @@ const App: React.FC = () => {
           <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight">Panel de Peso</h1>
           <p className="text-slate-400 mt-1">Un resumen visual de tu progreso.</p>
         </header>
-        
+
         <main>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <StatCard title="Peso Actual" value={stats.currentWeight.toFixed(2)} unit="kg" />
@@ -157,7 +173,7 @@ const App: React.FC = () => {
           </div>
 
           <div className="bg-secondary rounded-xl p-4 sm:p-6 shadow-lg mb-8">
-             <h2 className="text-xl font-semibold text-white mb-4">Evolución del Peso</h2>
+            <h2 className="text-xl font-semibold text-white mb-4">Evolución del Peso</h2>
             <WeightChart data={logs} />
           </div>
 
@@ -180,7 +196,7 @@ const App: React.FC = () => {
           </div>
 
           <div className="bg-secondary rounded-xl p-4 sm:p-6 shadow-lg">
-             <h2 className="text-xl font-semibold text-white mb-4">Registro Completo</h2>
+            <h2 className="text-xl font-semibold text-white mb-4">Registro Completo</h2>
             <DataTable data={logs} />
           </div>
         </main>
