@@ -6,6 +6,7 @@ import WeightChart from './components/WeightChart';
 import AggregatedStats from './components/AggregatedStats';
 import AdvancedAnalytics from './components/AdvancedAnalytics';
 import BmiSection from './components/BmiSection';
+import PredictionSection from './components/PredictionSection';
 import { formatNumber } from './utils/formatUtils';
 
 // Icons
@@ -187,6 +188,11 @@ function App() {
               </div>
 
               <WeightChart data={data} timeRange={timeRange} />
+            </section>
+
+             {/* PREDICTION SECTION (New) */}
+            <section>
+              <PredictionSection data={data} />
             </section>
 
             {/* Advanced Analytics Section */}
