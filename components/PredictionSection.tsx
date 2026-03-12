@@ -20,7 +20,7 @@ interface PredictionSectionProps {
 }
 
 const PredictionSection: React.FC<PredictionSectionProps> = ({ data }) => {
-  const prediction = useMemo(() => calculatePrediction(data), [data]);
+  const prediction = useMemo(() => calculatePrediction(data, 90), [data]);
 
   if (!prediction) return null;
 
@@ -78,7 +78,7 @@ const PredictionSection: React.FC<PredictionSectionProps> = ({ data }) => {
             </svg>
             Predicció Intel·ligent (30 dies)
           </h3>
-          <p className="text-xs text-gray-500 mt-0.5">Basada en la tendència dels últims 45 dies</p>
+          <p className="text-xs text-gray-500 mt-0.5">Basada en la tendència dels últims 90 dies</p>
         </div>
       </div>
 

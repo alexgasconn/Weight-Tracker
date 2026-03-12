@@ -22,7 +22,7 @@ export interface PredictionResult {
  * Calculates a linear regression forecast based on the last N days of data.
  * Includes standard error for confidence intervals.
  */
-export const calculatePrediction = (data: WeightRecord[], lookbackDays: number = 45, forecastDays: number = 30): PredictionResult | null => {
+export const calculatePrediction = (data: WeightRecord[], lookbackDays: number = 90, forecastDays: number = 30): PredictionResult | null => {
   if (data.length < 5) return null;
 
   // 1. Filter data to lookback period

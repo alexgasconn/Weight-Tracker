@@ -16,9 +16,34 @@ export const fetchWeightData = async (): Promise<WeightRecord[]> => {
     }
 
     const text = await response.text();
-    return parseCSV(text);
+    const records = parseCSV(text);
+    
+    // Cache the data for offline use
+    try {
+      localStorage.setItem('weightDataCache', JSON.stringify(records));
+    } catch (e) {
+      console.warn('Could not save to localStorage', e);
+    }
+    
+    return records;
   } catch (error) {
     console.error("Failed to fetch/parse data", error);
+    
+    // Try to load from cache
+    try {
+      const cached = localStorage.getItem('weightDataCache');
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        // Re-hydrate dates
+        return parsed.map((d: any) => ({
+          ...d,
+          date: new Date(d.date)
+        }));
+      }
+    } catch (e) {
+      console.warn('Could not load from localStorage', e);
+    }
+    
     throw error;
   }
 };

@@ -1,0 +1,17 @@
+{
+  "name": "Seguiment de Pes",
+  "short_name": "Pes",
+  "description": "Aplicació per al seguiment del pes corporal",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f3f4f6",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
