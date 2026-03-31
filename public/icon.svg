@@ -1,4 +1,28 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#2563eb"/>
-  <path d="M128 256l128 48 128-144" stroke="#ffffff" stroke-width="48" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- App background -->
+  <rect width="512" height="512" rx="108" fill="#2563eb"/>
+  <!-- Scale body (main platform) -->
+  <rect x="52" y="148" width="408" height="268" rx="56" fill="white"/>
+  <!-- Digital display screen -->
+  <rect x="144" y="182" width="224" height="108" rx="18" fill="#172554"/>
+  <!-- Display: top row digits (two groups) -->
+  <rect x="166" y="202" width="44" height="11" rx="5.5" fill="#38bdf8"/>
+  <rect x="218" y="202" width="44" height="11" rx="5.5" fill="#38bdf8"/>
+  <rect x="166" y="221" width="44" height="11" rx="5.5" fill="#38bdf8"/>
+  <rect x="218" y="221" width="44" height="11" rx="5.5" fill="#38bdf8"/>
+  <!-- Decimal dot -->
+  <circle cx="272" cy="227" r="7" fill="#7dd3fc"/>
+  <!-- Right digit group -->
+  <rect x="286" y="202" width="44" height="11" rx="5.5" fill="#38bdf8"/>
+  <rect x="286" y="221" width="44" height="11" rx="5.5" fill="#38bdf8"/>
+  <!-- Display: bottom row digit (single, kg) -->
+  <rect x="166" y="242" width="44" height="11" rx="5.5" fill="#38bdf8"/>
+  <rect x="286" y="242" width="44" height="11" rx="5.5" fill="#38bdf8"/>
+  <!-- kg label area (small) -->
+  <rect x="342" y="248" width="14" height="7" rx="3" fill="#38bdf8" opacity="0.6"/>
+  <rect x="342" y="259" width="14" height="7" rx="3" fill="#38bdf8" opacity="0.6"/>
+  <!-- Non-slip surface lines -->
+  <rect x="96" y="324" width="320" height="12" rx="6" fill="#bfdbfe"/>
+  <rect x="96" y="348" width="320" height="12" rx="6" fill="#bfdbfe"/>
+  <rect x="96" y="372" width="320" height="12" rx="6" fill="#bfdbfe"/>
 </svg>

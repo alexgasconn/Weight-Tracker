@@ -1,17 +1,88 @@
 {
+  "id": "/",
   "name": "Seguiment de Pes",
   "short_name": "Pes",
   "description": "Aplicació per al seguiment del pes corporal",
+  "lang": "ca",
+  "dir": "ltr",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "display_override": [
+    "window-controls-overlay",
+    "standalone",
+    "minimal-ui"
+  ],
+  "orientation": "portrait",
   "background_color": "#f3f4f6",
   "theme_color": "#2563eb",
+  "categories": [
+    "health",
+    "fitness"
+  ],
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "icon.svg",
-      "sizes": "192x192 512x512",
+      "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Veure Gràfics",
+      "short_name": "Gràfics",
+      "description": "Obre directament la secció de gràfics",
+      "url": "/?tab=charts",
+      "icons": [
+        {
+          "src": "icon.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "Veure Predicció",
+      "short_name": "Predicció",
+      "description": "Obre directament la secció de predicció",
+      "url": "/?tab=prediction",
+      "icons": [
+        {
+          "src": "icon.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "Afegir Pes",
+      "short_name": "Afegir",
+      "description": "Registra un nou pes",
+      "url": "/?action=add",
+      "icons": [
+        {
+          "src": "icon.svg",
+          "sizes": "any",
+          "type": "image/svg+xml"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "form_factor": "narrow",
+      "label": "Seguiment de Pes - Pantalla principal"
     }
   ]
 }

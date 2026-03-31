@@ -6,8 +6,79 @@ const SHEET_ID = '2PACX-1vQHBxexfNwpTBj3uAfTsa-3Y3ZUK7d88pfQBroQdkVtHHABVCvoWVsQ
 const CSV_URL = `https://docs.google.com/spreadsheets/d/e/${SHEET_ID}/pub?gid=0&single=true&output=csv`;
 
 const USER_HEIGHT_M = 1.74; // Fixed height as requested
+const LOCAL_STORAGE_KEY = 'localWeightData';
 
-export const fetchWeightData = async (): Promise<WeightRecord[]> => {
+export const getLocalData = (): WeightRecord[] => {
+  try {
+    const cached = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      return parsed.map((d: any) => ({
+        ...d,
+        date: new Date(d.date)
+      }));
+    }
+  } catch (e) {
+    console.warn('Could not load from localStorage', e);
+  }
+  return [];
+};
+
+export const saveLocalData = (data: WeightRecord[]) => {
+  try {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(data));
+  } catch (e) {
+    console.error('Could not save to localStorage', e);
+  }
+};
+
+export const addWeightRecord = async (weight: number, date: Date): Promise<WeightRecord[]> => {
+  const currentData = getLocalData();
+  
+  const newRecord: WeightRecord = {
+    date,
+    weight,
+    bmi: parseFloat((weight / (USER_HEIGHT_M * USER_HEIGHT_M)).toFixed(2)),
+    originalDateString: date.toISOString()
+  };
+
+  // Check if record for this date already exists (same day)
+  const existingIndex = currentData.findIndex(r => 
+    r.date.getFullYear() === date.getFullYear() &&
+    r.date.getMonth() === date.getMonth() &&
+    r.date.getDate() === date.getDate()
+  );
+
+  let updatedData;
+  if (existingIndex >= 0) {
+    updatedData = [...currentData];
+    updatedData[existingIndex] = newRecord;
+  } else {
+    updatedData = [...currentData, newRecord];
+  }
+
+  // Sort by date
+  updatedData.sort((a, b) => a.date.getTime() - b.date.getTime());
+  
+  saveLocalData(updatedData);
+  return updatedData;
+};
+
+export const deleteWeightRecord = async (date: Date): Promise<WeightRecord[]> => {
+  const currentData = getLocalData();
+  const updatedData = currentData.filter(r => r.date.getTime() !== date.getTime());
+  saveLocalData(updatedData);
+  return updatedData;
+};
+
+export const fetchWeightData = async (forceRefresh = false): Promise<WeightRecord[]> => {
+  const localData = getLocalData();
+  
+  // If we have local data and not forcing refresh, return it
+  if (localData.length > 0 && !forceRefresh) {
+    return localData;
+  }
+
   try {
     const response = await fetch(CSV_URL);
     
@@ -16,34 +87,27 @@ export const fetchWeightData = async (): Promise<WeightRecord[]> => {
     }
 
     const text = await response.text();
-    const records = parseCSV(text);
+    const remoteRecords = parseCSV(text);
     
-    // Cache the data for offline use
-    try {
-      localStorage.setItem('weightDataCache', JSON.stringify(records));
-    } catch (e) {
-      console.warn('Could not save to localStorage', e);
-    }
-    
-    return records;
+    // Merge unique dates
+    const merged = [...localData];
+    remoteRecords.forEach(remote => {
+      const exists = merged.some(l => 
+        l.date.getFullYear() === remote.date.getFullYear() &&
+        l.date.getMonth() === remote.date.getMonth() &&
+        l.date.getDate() === remote.date.getDate()
+      );
+      if (!exists) {
+        merged.push(remote);
+      }
+    });
+
+    merged.sort((a, b) => a.date.getTime() - b.date.getTime());
+    saveLocalData(merged);
+    return merged;
   } catch (error) {
     console.error("Failed to fetch/parse data", error);
-    
-    // Try to load from cache
-    try {
-      const cached = localStorage.getItem('weightDataCache');
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        // Re-hydrate dates
-        return parsed.map((d: any) => ({
-          ...d,
-          date: new Date(d.date)
-        }));
-      }
-    } catch (e) {
-      console.warn('Could not load from localStorage', e);
-    }
-    
+    if (localData.length > 0) return localData;
     throw error;
   }
 };

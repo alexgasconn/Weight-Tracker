@@ -5,6 +5,7 @@ import { formatNumber } from '../utils/formatUtils';
 
 interface AggregatedStatsProps {
   data: WeightRecord[];
+  onDelete?: (date: Date) => void;
 }
 
 type SortKey = keyof StatGroup | 'diff' | 'rangeVal';
@@ -15,7 +16,7 @@ interface EnrichedStatGroup extends StatGroup {
   rangeVal: number; // Max - Min
 }
 
-const AggregatedStats: React.FC<AggregatedStatsProps> = ({ data }) => {
+const AggregatedStats: React.FC<AggregatedStatsProps> = ({ data, onDelete }) => {
   const [activeTab, setActiveTab] = useState<'year' | 'month' | 'week' | 'day'>('month');
   const [sortConfig, setSortConfig] = useState<{ key: SortKey; direction: SortDirection }>({ key: 'firstDate', direction: 'desc' });
 
@@ -134,7 +135,7 @@ const AggregatedStats: React.FC<AggregatedStatsProps> = ({ data }) => {
                       onClick={() => handleSort('rangeVal')}
                       className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                     >
-                      {activeTab === 'day' ? 'Rang' : 'Rang (Min - Màx)'} <SortIcon columnKey="rangeVal" />
+                      {activeTab === 'day' ? 'Accions' : 'Rang (Min - Màx)'} <SortIcon columnKey="rangeVal" />
                     </th>
                   </tr>
                 </thead>
@@ -173,7 +174,15 @@ const AggregatedStats: React.FC<AggregatedStatsProps> = ({ data }) => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500">
                         {activeTab === 'day' ? (
-                           <span className="text-gray-400">-</span>
+                           <button 
+                             onClick={() => onDelete?.(group.firstDate)}
+                             className="text-rose-500 hover:text-rose-700 p-1 rounded-lg hover:bg-rose-50 transition-colors"
+                             title="Eliminar registre"
+                           >
+                             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                             </svg>
+                           </button>
                         ) : (
                            <span className="font-mono text-xs">{formatNumber(group.min)} - {formatNumber(group.max)}</span>
                         )}

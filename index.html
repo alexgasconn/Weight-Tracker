@@ -1,19 +1,46 @@
 <!DOCTYPE html>
 <html lang="ca">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Seguiment de Pes</title>
-    <link rel="manifest" href="/manifest.json">
-    <meta name="theme-color" content="#2563eb">
-    <link rel="icon" type="image/svg+xml" href="/icon.svg">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-      body {
-        font-family: 'Inter', system-ui, -apple-system, sans-serif;
-        background-color: #f3f4f6;
-      }
-    </style>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Seguiment de Pes</title>
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.json" />
+
+  <!-- Theme & status bar -->
+  <meta name="theme-color" content="#2563eb" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#1e40af" media="(prefers-color-scheme: dark)" />
+
+  <!-- Android / Chrome PWA -->
+  <meta name="mobile-web-app-capable" content="yes" />
+  <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+
+  <!-- iOS / Safari PWA -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Pes" />
+  <link rel="apple-touch-icon" href="/icon.svg" />
+
+  <!-- SEO & social -->
+  <meta name="description" content="Aplicació per al seguiment del pes corporal" />
+  <meta name="application-name" content="Seguiment de Pes" />
+
+  <!-- Preconnect to CDN origins used at runtime -->
+  <link rel="preconnect" href="https://aistudiocdn.com" crossorigin />
+  <link rel="dns-prefetch" href="https://cdn.tailwindcss.com" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: #f3f4f6;
+      /* Safe area insets for notch/island devices */
+      padding-top: env(safe-area-inset-top);
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+  </style>
   <script type="importmap">
 {
   "imports": {
@@ -24,21 +51,39 @@
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
+  <link rel="stylesheet" href="/index.css">
 </head>
-  <body>
-    <div id="root"></div>
+
+<body>
+  <div id="root"></div>
   <script type="module" src="/index.tsx"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').then(registration => {
-          console.log('SW registered: ', registration);
-        }).catch(registrationError => {
-          console.log('SW registration failed: ', registrationError);
-        });
+        navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
+          .then(reg => {
+            // Prompt user to reload when a new SW is waiting
+            reg.addEventListener('updatefound', () => {
+              const newWorker = reg.installing;
+              if (!newWorker) return;
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  // New version available — send skip-waiting so it activates on next visit
+                  newWorker.postMessage('SKIP_WAITING');
+                }
+              });
+            });
+          })
+          .catch(() => {/* SW not critical — app still works online */ });
       });
+    }
+
+    // Handle /?action=add shortcut
+    const params = new URLSearchParams(location.search);
+    if (params.get('action') === 'add') {
+      window.__openAddModal = true;
     }
   </script>
 </body>
+
 </html>
