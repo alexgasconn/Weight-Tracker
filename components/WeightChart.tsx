@@ -31,15 +31,18 @@ const WeightChart: React.FC<WeightChartProps> = ({ data, timeRange }) => {
 
     if (timeRange !== TimeRange.ALL) {
       const cutoff = new Date();
+      if (timeRange === TimeRange.WEEK2) cutoff.setDate(now.getDate() - 14);
       if (timeRange === TimeRange.MONTH1) cutoff.setMonth(now.getMonth() - 1);
       if (timeRange === TimeRange.MONTH3) cutoff.setMonth(now.getMonth() - 3);
+      if (timeRange === TimeRange.MONTH6) cutoff.setMonth(now.getMonth() - 6);
       if (timeRange === TimeRange.YEAR1) cutoff.setFullYear(now.getFullYear() - 1);
+      if (timeRange === TimeRange.YEAR2) cutoff.setFullYear(now.getFullYear() - 2);
       cutData = data.filter(d => d.date >= cutoff);
     }
 
     // Apply smoothing if selected
     if (smoothing === 'raw') return cutData;
-    
+
     const window = smoothing === 'ma7' ? 7 : smoothing === 'ma14' ? 14 : 30;
     return calculateMovingAverage(cutData, window);
   }, [data, timeRange, smoothing]);
@@ -80,26 +83,26 @@ const WeightChart: React.FC<WeightChartProps> = ({ data, timeRange }) => {
   return (
     <div className="w-full">
       <div className="flex justify-end mb-4">
-         <div className="bg-gray-100 p-1 rounded-lg inline-flex items-center text-xs">
-            <span className="px-2 text-gray-500 font-medium mr-1">Suavitzat:</span>
-            {[
-              { id: 'raw', label: 'Cap (Diari)' },
-              { id: 'ma7', label: '7 Dies' },
-              { id: 'ma30', label: '30 Dies' },
-            ].map((opt) => (
-               <button
-                key={opt.id}
-                onClick={() => setSmoothing(opt.id as SmoothingLevel)}
-                className={`px-3 py-1 rounded-md transition-all ${
-                  smoothing === opt.id 
-                  ? 'bg-white text-blue-600 shadow-sm font-semibold' 
+        <div className="bg-gray-100 p-1 rounded-lg inline-flex items-center text-xs">
+          <span className="px-2 text-gray-500 font-medium mr-1">Suavitzat:</span>
+          {[
+            { id: 'raw', label: 'Cap (Diari)' },
+            { id: 'ma7', label: '7 Dies' },
+            { id: 'ma14', label: '14 Dies' },
+            { id: 'ma30', label: '30 Dies' },
+          ].map((opt) => (
+            <button
+              key={opt.id}
+              onClick={() => setSmoothing(opt.id as SmoothingLevel)}
+              className={`px-3 py-1 rounded-md transition-all ${smoothing === opt.id
+                  ? 'bg-white text-blue-600 shadow-sm font-semibold'
                   : 'text-gray-500 hover:text-gray-900'
                 }`}
-               >
-                 {opt.label}
-               </button>
-            ))}
-         </div>
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="h-[400px]">
@@ -110,47 +113,47 @@ const WeightChart: React.FC<WeightChartProps> = ({ data, timeRange }) => {
           >
             <defs>
               <linearGradient id="colorWeight" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2}/>
-                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2} />
+                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
               </linearGradient>
               <linearGradient id="colorMa" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.2}/>
-                <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.2} />
+                <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-            <XAxis 
-              dataKey="date" 
-              tickFormatter={formatXAxis} 
+            <XAxis
+              dataKey="date"
+              tickFormatter={formatXAxis}
               stroke="#9ca3af"
               tick={{ fontSize: 12 }}
               minTickGap={30}
             />
-            <YAxis 
-              domain={[domainMin, domainMax]} 
+            <YAxis
+              domain={[domainMin, domainMax]}
               stroke="#9ca3af"
               tick={{ fontSize: 12 }}
               unit="kg"
               width={40}
             />
             <Tooltip content={<CustomTooltip />} />
-            <Legend verticalAlign="top" height={36}/>
-            
+            <Legend verticalAlign="top" height={36} />
+
             {/* If raw, show area, otherwise show line for MA */}
             {smoothing === 'raw' ? (
-              <Area 
+              <Area
                 name="Pes Diari"
-                type="monotone" 
-                dataKey="weight" 
-                stroke="#3b82f6" 
+                type="monotone"
+                dataKey="weight"
+                stroke="#3b82f6"
                 strokeWidth={2}
-                fillOpacity={1} 
-                fill="url(#colorWeight)" 
+                fillOpacity={1}
+                fill="url(#colorWeight)"
                 activeDot={{ r: 6 }}
               />
             ) : (
               <Area
-                name={`Mitjana Mòbil (${smoothing === 'ma7' ? '7' : '30'} dies)`}
+                name={`Mitjana Mòbil (${smoothing === 'ma7' ? '7' : smoothing === 'ma14' ? '14' : '30'} dies)`}
                 type="monotone"
                 dataKey="movingAverage"
                 stroke="#8b5cf6"

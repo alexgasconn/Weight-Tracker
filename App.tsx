@@ -232,17 +232,20 @@ function App() {
                   {/* Time Range Selector */}
                   <div className="bg-gray-100 p-1 rounded-lg inline-flex self-start sm:self-center">
                     {[
+                      { label: '2 Setmanes', value: TimeRange.WEEK2 },
                       { label: '1 Mes', value: TimeRange.MONTH1 },
                       { label: '3 Mesos', value: TimeRange.MONTH3 },
+                      { label: '6 Mesos', value: TimeRange.MONTH6 },
                       { label: '1 Any', value: TimeRange.YEAR1 },
+                      { label: '2 Anys', value: TimeRange.YEAR2 },
                       { label: 'Tot', value: TimeRange.ALL },
                     ].map((option) => (
                       <button
                         key={option.value}
                         onClick={() => setTimeRange(option.value)}
                         className={`px-3 py-1.5 text-xs font-medium rounded-md transition-all ${timeRange === option.value
-                            ? 'bg-white text-blue-600 shadow-sm'
-                            : 'text-gray-500 hover:text-gray-900'
+                          ? 'bg-white text-blue-600 shadow-sm'
+                          : 'text-gray-500 hover:text-gray-900'
                           }`}
                       >
                         {option.label}
@@ -323,9 +326,12 @@ function App() {
                           onChange={(e) => setTimeRange(e.target.value as TimeRange)}
                           className="bg-gray-100 border-none rounded-lg text-xs font-medium px-2 py-1 focus:ring-2 focus:ring-blue-500"
                         >
+                          <option value={TimeRange.WEEK2}>2 Setmanes</option>
                           <option value={TimeRange.MONTH1}>1 Mes</option>
                           <option value={TimeRange.MONTH3}>3 Mesos</option>
+                          <option value={TimeRange.MONTH6}>6 Mesos</option>
                           <option value={TimeRange.YEAR1}>1 Any</option>
+                          <option value={TimeRange.YEAR2}>2 Anys</option>
                           <option value={TimeRange.ALL}>Tot</option>
                         </select>
                       </div>

@@ -12,7 +12,7 @@ export interface WeightStats {
   changeWeekly: number; // Avg change over last 7 entries
   min: number;
   max: number;
-  bmi?: number; 
+  bmi?: number;
   average: number;
 }
 
@@ -20,7 +20,10 @@ export enum TimeRange {
   ALL = 'ALL',
   MONTH1 = '1M',
   MONTH3 = '3M',
-  YEAR1 = '1Y'
+  YEAR1 = '1Y',
+  WEEK2 = '14D',
+  MONTH6 = '6M',
+  YEAR2 = '2Y'
 }
 
 export interface AiInsight {
