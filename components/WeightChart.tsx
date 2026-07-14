@@ -19,7 +19,7 @@ interface WeightChartProps {
   timeRange: TimeRange;
 }
 
-type SmoothingLevel = 'raw' | 'ma7' | 'ma14' | 'ma30';
+type SmoothingLevel = 'raw' | 'ma3' | 'ma7' | 'ma14' | 'ma30';
 
 const WeightChart: React.FC<WeightChartProps> = ({ data, timeRange }) => {
   const [smoothing, setSmoothing] = useState<SmoothingLevel>('raw');
@@ -42,8 +42,8 @@ const WeightChart: React.FC<WeightChartProps> = ({ data, timeRange }) => {
 
     // Apply smoothing if selected
     if (smoothing === 'raw') return cutData;
-
-    const window = smoothing === 'ma7' ? 7 : smoothing === 'ma14' ? 14 : 30;
+    
+    const window = smoothing === 'ma3' ? 3 : smoothing === 'ma7' ? 7 : smoothing === 'ma14' ? 14 : 30;
     return calculateMovingAverage(cutData, window);
   }, [data, timeRange, smoothing]);
 
@@ -85,12 +85,13 @@ const WeightChart: React.FC<WeightChartProps> = ({ data, timeRange }) => {
       <div className="flex justify-end mb-4">
         <div className="bg-gray-100 p-1 rounded-lg inline-flex items-center text-xs">
           <span className="px-2 text-gray-500 font-medium mr-1">Suavitzat:</span>
-          {[
-            { id: 'raw', label: 'Cap (Diari)' },
-            { id: 'ma7', label: '7 Dies' },
-            { id: 'ma14', label: '14 Dies' },
-            { id: 'ma30', label: '30 Dies' },
-          ].map((opt) => (
+            {[
+              { id: 'raw', label: 'Cap (Diari)' },
+              { id: 'ma3', label: '3 Dies' },
+              { id: 'ma7', label: '7 Dies' },
+              { id: 'ma14', label: '14 Dies' },
+              { id: 'ma30', label: '30 Dies' },
+            ].map((opt) => (
             <button
               key={opt.id}
               onClick={() => setSmoothing(opt.id as SmoothingLevel)}
@@ -153,7 +154,7 @@ const WeightChart: React.FC<WeightChartProps> = ({ data, timeRange }) => {
               />
             ) : (
               <Area
-                name={`Mitjana Mòbil (${smoothing === 'ma7' ? '7' : smoothing === 'ma14' ? '14' : '30'} dies)`}
+                name={`Mitjana Mòbil (${smoothing === 'ma3' ? '3' : smoothing === 'ma7' ? '7' : smoothing === 'ma14' ? '14' : '30'} dies)`}
                 type="monotone"
                 dataKey="movingAverage"
                 stroke="#8b5cf6"
