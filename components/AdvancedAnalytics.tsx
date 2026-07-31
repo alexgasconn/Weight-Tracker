@@ -22,32 +22,32 @@ const AdvancedAnalytics: React.FC<AdvancedAnalyticsProps> = ({ data }) => {
             </h3>
             <p className="text-sm text-gray-500">Visualitza el rang (Min-Max) i mitjana per entendre l'estabilitat del pes.</p>
           </div>
-          
+
           <div className="bg-gray-100 p-1 rounded-lg flex shrink-0 gap-1">
-             <button
-               onClick={() => setPeriod('week')}
-               className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${period === 'week' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
-             >
-               Setmanal
-             </button>
-             <button
-               onClick={() => setPeriod('15days')}
-               className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${period === '15days' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
-             >
-               15 dies
-             </button>
-             <button
-               onClick={() => setPeriod('month')}
-               className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${period === 'month' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
-             >
-               Mensual
-             </button>
-             <button
-               onClick={() => setPeriod('quarter')}
-               className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${period === 'quarter' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
-             >
-               Trimestre
-             </button>
+            <button
+              onClick={() => setPeriod('week')}
+              className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${period === 'week' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+            >
+              Setmanal
+            </button>
+            <button
+              onClick={() => setPeriod('15days')}
+              className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${period === '15days' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+            >
+              15 dies
+            </button>
+            <button
+              onClick={() => setPeriod('month')}
+              className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${period === 'month' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+            >
+              Mensual
+            </button>
+            <button
+              onClick={() => setPeriod('quarter')}
+              className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${period === 'quarter' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+            >
+              Trimestre
+            </button>
           </div>
         </div>
 

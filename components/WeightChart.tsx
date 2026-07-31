@@ -22,7 +22,7 @@ interface WeightChartProps {
 type SmoothingLevel = 'raw' | 'ma3' | 'ma7' | 'ma14' | 'ma30';
 
 const WeightChart: React.FC<WeightChartProps> = ({ data, timeRange }) => {
-  const [smoothing, setSmoothing] = useState<SmoothingLevel>('raw');
+  const [smoothing, setSmoothing] = useState<SmoothingLevel>('ma3');
 
   // Filter data based on time range
   const filteredData = useMemo(() => {

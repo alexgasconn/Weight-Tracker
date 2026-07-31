@@ -21,7 +21,7 @@ function App() {
     const [data, setData] = useState<WeightRecord[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
-    const [timeRange, setTimeRange] = useState<TimeRange>(TimeRange.ALL);
+    const [timeRange, setTimeRange] = useState<TimeRange>(TimeRange.YEAR1);
     const [usingDemoData, setUsingDemoData] = useState<boolean>(false);
     const [activeTab, setActiveTab] = useState<'summary' | 'charts' | 'prediction' | 'table'>('summary');
     const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
