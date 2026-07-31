@@ -10,6 +10,7 @@ import BmiSection from './components/BmiSection';
 import PredictionSection from './components/PredictionSection';
 import AddWeightModal from './components/AddWeightModal';
 import ConfirmModal from './components/ConfirmModal';
+import Calendar from './components/Calendar';
 import { formatNumber } from './utils/formatUtils';
 
 // Icons
@@ -151,12 +152,12 @@ function App() {
               <svg xmlns="http://www.w3.org/2000/svg" className={`h-5 w-5 ${syncing ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
-            </button>
-          </div>
-        </div>
-      </header>
+                <WeightChart data={data} timeRange={timeRange} />
+              </section>
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 sm:mt-8">
+              <Calendar data={data} />
+              
+              <PredictionSection data={data} />
 
         {/* Error Notification */}
         {error && (
@@ -222,8 +223,10 @@ function App() {
               <section className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
                   <div>
-                    <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                      <TrendIcon />
+                      <WeightChart data={data} timeRange={timeRange} />
+                    </div>
+                    <Calendar data={data} />
+                    <AdvancedAnalytics data={data} />
                       Evolució del Pes
                     </h2>
                     <p className="text-sm text-gray-500">Tendència diària i suavitzat</p>
