@@ -1,6 +1,6 @@
 import { WeightRecord, StatGroup } from '../types';
 
-export const groupData = (data: WeightRecord[], period: 'year' | 'month' | 'week' | 'day'): StatGroup[] => {
+export const groupData = (data: WeightRecord[], period: 'year' | 'month' | 'week' | 'day' | '15days' | 'quarter'): StatGroup[] => {
   const groups: Record<string, StatGroup> = {};
 
   data.forEach(record => {
@@ -11,12 +11,28 @@ export const groupData = (data: WeightRecord[], period: 'year' | 'month' | 'week
     if (period === 'year') {
       key = date.getFullYear().toString();
       label = key;
+    } else if (period === '15days') {
+      const year = date.getFullYear();
+      const month = date.getMonth();
+      const half = Math.floor((date.getDate() - 1) / 15); // 0 => days 1-15, 1 => days 16-end
+      key = `${year}-${month}-H${half}`;
+      const startDay = half * 15 + 1;
+      // compute end day (handle month length)
+      const lastDay = new Date(year, month + 1, 0).getDate();
+      const endDay = half === 0 ? Math.min(15, lastDay) : lastDay;
+      const monthName = date.toLocaleDateString('ca-ES', { month: 'short' });
+      label = `${startDay}-${endDay} ${monthName} ${year}`;
     } else if (period === 'month') {
       const month = date.getMonth();
       const year = date.getFullYear();
       key = `${year}-${month}`;
       label = date.toLocaleDateString('ca-ES', { month: 'long', year: 'numeric' });
       label = label.charAt(0).toUpperCase() + label.slice(1);
+    } else if (period === 'quarter') {
+      const year = date.getFullYear();
+      const quarter = Math.floor(date.getMonth() / 3) + 1;
+      key = `${year}-Q${quarter}`;
+      label = `Trimestre ${quarter}, ${year}`;
     } else if (period === 'week') {
       const [year, week] = getWeekNumber(date);
       key = `${year}-W${week.toString().padStart(2, '0')}`;

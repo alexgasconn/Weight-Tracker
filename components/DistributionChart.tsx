@@ -15,7 +15,7 @@ import { formatNumber } from '../utils/formatUtils';
 
 interface DistributionChartProps {
   data: WeightRecord[];
-  period: 'month' | 'week';
+  period: 'month' | 'week' | '15days' | 'quarter';
 }
 
 const DistributionChart: React.FC<DistributionChartProps> = ({ data, period }) => {
@@ -75,8 +75,12 @@ const DistributionChart: React.FC<DistributionChartProps> = ({ data, period }) =
             dataKey="label" 
             stroke="#9ca3af"
             tick={{ fontSize: 10 }}
-            interval={period === 'week' ? 4 : 'preserveStartEnd'} // Show fewer labels for weeks to avoid clutter
-            tickFormatter={(value) => period === 'week' ? value.split(',')[0] : value}
+            interval={(period === 'week' || period === '15days') ? 4 : 'preserveStartEnd'} // Show fewer labels for denser groupings
+            tickFormatter={(value) => {
+              if (period === 'week' || period === '15days') return value.split(',')[0];
+              if (period === 'quarter') return value.replace('Trimestre ', 'T');
+              return value;
+            }}
           />
           <YAxis 
             domain={[domainMin, domainMax]} 
