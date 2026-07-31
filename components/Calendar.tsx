@@ -87,15 +87,18 @@ const Calendar: React.FC<CalendarProps> = ({ data }) => {
 
                     const deltaClass = delta === null ? 'text-gray-400' : delta > 0 ? 'text-rose-600' : delta < 0 ? 'text-emerald-600' : 'text-gray-600';
 
+                    // subtle highlight for days with data
+                    const hasDataBg = record ? 'bg-indigo-50 border border-indigo-100' : (inMonth ? 'bg-white' : 'bg-gray-50 text-gray-400');
+
                     return (
-                        <div key={key} className={`p-2 rounded-lg min-h-[64px] flex flex-col items-center justify-start text-sm ${inMonth ? 'bg-white' : 'bg-gray-50 text-gray-400'}`}>
+                        <div key={key} className={`p-2 rounded-lg min-h-[64px] flex flex-col items-center justify-start text-sm ${hasDataBg}`}>
                             <div className="w-full flex justify-between items-start">
-                                <span className="text-xs font-medium">{d.getDate()}</span>
+                                <span className={`text-xs font-medium ${inMonth ? '' : 'opacity-60'}`}>{d.getDate()}</span>
                             </div>
 
                             {record ? (
                                 <div className="mt-1 text-center">
-                                    <div className="text-sm font-semibold">{formatNumber(record.weight)} kg</div>
+                                    <div className="text-sm font-semibold text-indigo-700">{formatNumber(record.weight)} kg</div>
                                     <div className={`text-[11px] mt-0.5 ${deltaClass}`}>{delta === null ? '—' : delta > 0 ? `+${formatNumber(delta)} ↑` : delta < 0 ? `${formatNumber(Math.abs(delta))} ↓` : '0.00'}</div>
                                 </div>
                             ) : (
