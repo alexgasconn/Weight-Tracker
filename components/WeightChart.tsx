@@ -42,7 +42,7 @@ const WeightChart: React.FC<WeightChartProps> = ({ data, timeRange }) => {
 
     // Apply smoothing if selected
     if (smoothing === 'raw') return cutData;
-    
+
     const window = smoothing === 'ma3' ? 3 : smoothing === 'ma7' ? 7 : smoothing === 'ma14' ? 14 : 30;
     return calculateMovingAverage(cutData, window);
   }, [data, timeRange, smoothing]);
@@ -85,19 +85,19 @@ const WeightChart: React.FC<WeightChartProps> = ({ data, timeRange }) => {
       <div className="flex justify-end mb-4">
         <div className="bg-gray-100 p-1 rounded-lg inline-flex items-center text-xs">
           <span className="px-2 text-gray-500 font-medium mr-1">Suavitzat:</span>
-            {[
-              { id: 'raw', label: 'Cap (Diari)' },
-              { id: 'ma3', label: '3 Dies' },
-              { id: 'ma7', label: '7 Dies' },
-              { id: 'ma14', label: '14 Dies' },
-              { id: 'ma30', label: '30 Dies' },
-            ].map((opt) => (
+          {[
+            { id: 'raw', label: 'Cap (Diari)' },
+            { id: 'ma3', label: '3 Dies' },
+            { id: 'ma7', label: '7 Dies' },
+            { id: 'ma14', label: '14 Dies' },
+            { id: 'ma30', label: '30 Dies' },
+          ].map((opt) => (
             <button
               key={opt.id}
               onClick={() => setSmoothing(opt.id as SmoothingLevel)}
               className={`px-3 py-1 rounded-md transition-all ${smoothing === opt.id
-                  ? 'bg-white text-blue-600 shadow-sm font-semibold'
-                  : 'text-gray-500 hover:text-gray-900'
+                ? 'bg-white text-blue-600 shadow-sm font-semibold'
+                : 'text-gray-500 hover:text-gray-900'
                 }`}
             >
               {opt.label}

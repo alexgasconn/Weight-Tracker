@@ -37,10 +37,14 @@ const Calendar: React.FC<CalendarProps> = ({ data }) => {
         const { min, max } = globalMinMax;
         if (min === max) return `hsl(60, 70%, 85%)`;
         const ratio = (w - min) / (max - min);
+        // apply a mild non-linear curve to increase perceptual differences slightly
+        const adj = Math.pow(ratio, 0.75);
         // hue: green (120) for low -> red (0) for high
-        const hue = (1 - ratio) * 120;
-        // light background for subtle effect
-        return `hsl(${hue}, 70%, 92%)`;
+        const hue = (1 - adj) * 120;
+        // increase saturation and reduce lightness slightly with higher values
+        const saturation = Math.round(65 + adj * 15); // 65% -> 80%
+        const lightness = Math.round(94 - adj * 8);   // 94% -> 86%
+        return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
     };
 
     const monthGrid = useMemo(() => {
