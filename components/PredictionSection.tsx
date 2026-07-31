@@ -147,7 +147,7 @@ const PredictionSection: React.FC<PredictionSectionProps> = ({ data }) => {
             <div className="ml-4 inline-flex items-center gap-2">
               <label className="text-xs text-gray-500 mr-2">Model:</label>
               {/* Single-selection buttons */}
-               <button title="General = mitjana de les prediccions dels models" onClick={() => { setSelectedModel('Ensemble'); try { localStorage.setItem('preferredPredictionModel', 'Ensemble'); } catch { } }} className={`text-xs px-2 py-1 rounded ${selectedModel === 'Ensemble' ? 'bg-purple-600 text-white' : 'bg-white text-gray-600 border'}`}>General (mitjana)</button>
+              <button title="General = mitjana de les prediccions dels models" onClick={() => { setSelectedModel('Ensemble'); try { localStorage.setItem('preferredPredictionModel', 'Ensemble'); } catch { } }} className={`text-xs px-2 py-1 rounded ${selectedModel === 'Ensemble' ? 'bg-purple-600 text-white' : 'bg-white text-gray-600 border'}`}>General (mitjana)</button>
               {models && models.map((m: any) => (
                 <button key={m.name} onClick={() => { setSelectedModel(m.name); try { localStorage.setItem('preferredPredictionModel', m.name); } catch { } }} className={`text-xs px-2 py-1 rounded ${selectedModel === m.name ? 'bg-purple-600 text-white' : 'bg-white text-gray-600 border'}`} style={{ borderColor: '#eee' }}>{m.name}</button>
               ))}
