@@ -21,28 +21,77 @@ interface PredictionSectionProps {
 
 const PredictionSection: React.FC<PredictionSectionProps> = ({ data }) => {
   const [forecastDays, setForecastDays] = useState<number>(30);
-  const prediction = useMemo(() => calculatePrediction(data, 90, forecastDays), [data, forecastDays]);
+  const [showModels, setShowModels] = useState<Record<string, boolean>>({});
+  const [showEnsemble, setShowEnsemble] = useState(true);
+  const [alpha, setAlpha] = useState<number>(0.2);
+  const [maWindow, setMaWindow] = useState<number>(7);
+  const [forestSize, setForestSize] = useState<number>(30);
+  const [defaultModel, setDefaultModel] = useState<string | null>(null);
+  const prediction = useMemo(() => calculatePrediction(data, 90, forecastDays, { alpha, maWindow, forestSize }), [data, forecastDays, alpha, maWindow, forestSize]);
+
+  // Load preferred default model from localStorage
+  React.useEffect(() => {
+    try {
+      const stored = localStorage.getItem('preferredPredictionModel');
+      if (stored) setDefaultModel(stored);
+    } catch (e) {
+      // ignore
+    }
+  }, []);
 
   if (!prediction) return null;
 
-  const { points, dailyChange, predictedWeight30Days, nextMilestone } = prediction;
+  const { points, dailyChange, predictedWeight30Days, nextMilestone, models } = prediction as any;
 
   // Build processed points to allow separate styling for past/future segments
+  // Initialize model visibility defaults when models first appear
+  React.useEffect(() => {
+    if (models && Object.keys(showModels).length === 0) {
+      const init: Record<string, boolean> = {};
+      models.forEach((m: any) => (init[m.name] = false));
+      if (init['TimeForest'] !== undefined) init['TimeForest'] = true;
+      setShowModels(init);
+    }
+  }, [models]);
+
   const processed = useMemo(() => {
     if (!points) return [];
-    return points.map(p => ({
-      ...p,
-      predictedPast: p.isFuture ? null : p.predicted,
-      predictedFuture: p.isFuture ? p.predicted : null,
-      upperFuture: p.isFuture ? p.upperBound : null,
-      lowerFuture: p.isFuture ? p.lowerBound : null
-    }));
-  }, [points]);
+
+    return points.map((p: any, idx: number) => {
+      const entry: any = {
+        ...p,
+        predictedPast: p.isFuture ? null : p.predicted,
+        predictedFuture: p.isFuture ? p.predicted : null,
+        upperFuture: p.isFuture ? p.upperBound : null,
+        lowerFuture: p.isFuture ? p.lowerBound : null
+      };
+
+      // attach per-model predicted fields
+      if (models) {
+        models.forEach((m: any) => {
+          const key = `model_${m.name.replace(/\s+/g, '_')}`;
+          entry[key] = m.points[idx]?.predicted ?? null;
+        });
+      }
+
+      return entry;
+    });
+  }, [points, models]);
 
   // Domain calculation
   const allValues = points.flatMap(p => [p.weight, p.upperBound, p.lowerBound].filter(v => v !== null) as number[]);
   const minVal = Math.floor(Math.min(...allValues) - 0.5);
   const maxVal = Math.ceil(Math.max(...allValues) + 0.5);
+
+  // Determine displayed projection depending on defaultModel
+  let displayedProjection = predictedWeight30Days;
+  if (defaultModel && models && defaultModel !== 'Ensemble') {
+    const sel = models.find((m: any) => m.name === defaultModel);
+    if (sel) {
+      const last = sel.points[sel.points.length - 1];
+      if (last) displayedProjection = last.predicted;
+    }
+  }
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -98,8 +147,44 @@ const PredictionSection: React.FC<PredictionSectionProps> = ({ data }) => {
                 <button key={h} onClick={() => setForecastDays(h)} className={`ml-2 text-xs px-2 py-1 rounded ${forecastDays === h ? 'bg-purple-600 text-white' : 'bg-white text-gray-600 border'} `}>{h}d</button>
               ))}
             </div>
+            <div className="ml-4 inline-flex items-center gap-2">
+              <label className="text-xs text-gray-500 mr-2">Mostrar:</label>
+              <button onClick={() => setShowEnsemble(s => !s)} className={`text-xs px-2 py-1 rounded ${showEnsemble ? 'bg-purple-600 text-white' : 'bg-white text-gray-600 border'}`}>General</button>
+              {models && models.map((m: any) => (
+                <button key={m.name} onClick={() => setShowModels(s => ({ ...s, [m.name]: !s[m.name] }))} className={`text-xs px-2 py-1 rounded ${showModels[m.name] ? 'bg-white text-gray-800 border' : 'bg-white text-gray-500 border'} `} style={{ borderColor: '#eee' }}>{m.name}</button>
+              ))}
+            </div>
+            <div className="ml-4 flex items-center gap-3">
+              <div className="text-xs text-gray-500">Paràmetres:</div>
+              <div className="flex items-center gap-2">
+                <label className="text-[11px] text-gray-600">α</label>
+                <input type="range" min="0.01" max="1" step="0.01" value={alpha} onChange={(e) => setAlpha(parseFloat(e.target.value))} className="w-24" />
+                <span className="text-xs w-10 text-right">{alpha.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-[11px] text-gray-600">MA</label>
+                <input type="number" min={1} max={30} value={maWindow} onChange={(e) => setMaWindow(Math.max(1, parseInt(e.target.value || '1')))} className="w-16 text-xs p-1 border rounded" />
+              </div>
+              <div className="flex items-center gap-2">
+                <label className="text-[11px] text-gray-600">Forest</label>
+                <input type="number" min={1} max={200} value={forestSize} onChange={(e) => setForestSize(Math.max(1, parseInt(e.target.value || '1')))} className="w-16 text-xs p-1 border rounded" />
+              </div>
+            </div>
           </div>
           <p className="text-xs text-gray-500 mt-0.5">Basada en la tendència dels últims 90 dies</p>
+        </div>
+      </div>
+
+      {/* Default model selector */}
+      <div className="p-4 border-b border-gray-100 bg-white">
+        <div className="max-w-6xl mx-auto flex items-center gap-3">
+          <label className="text-sm text-gray-600">Model per defecte:</label>
+          <select value={defaultModel || 'Ensemble'} onChange={(e) => { setDefaultModel(e.target.value); try { localStorage.setItem('preferredPredictionModel', e.target.value); } catch { } }} className="text-sm p-2 border rounded">
+            <option value="Ensemble">General (Ensemble)</option>
+            {models && models.map((m: any) => (
+              <option key={m.name} value={m.name}>{m.name}</option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -109,7 +194,7 @@ const PredictionSection: React.FC<PredictionSectionProps> = ({ data }) => {
           <div className="bg-purple-50 rounded-xl p-4 border border-purple-100">
             <span className="text-xs font-bold uppercase text-purple-800 opacity-60">Projecció a {forecastDays} dies</span>
             <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-3xl font-bold text-purple-700">{formatNumber(predictedWeight30Days)}</span>
+              <span className="text-3xl font-bold text-purple-700">{formatNumber(displayedProjection)}</span>
               <span className="text-sm font-medium text-purple-600">kg</span>
             </div>
             <div className="text-xs text-purple-600/80 mt-1">
@@ -178,6 +263,17 @@ const PredictionSection: React.FC<PredictionSectionProps> = ({ data }) => {
               {/* Historical trend (solid) and future (dashed) separated */}
               <Line type="monotone" dataKey="predictedPast" stroke="#7e22ce" strokeWidth={2} dot={false} name="Tendència Històrica" />
               <Line type="monotone" dataKey="predictedFuture" stroke="#a855f7" strokeWidth={2} strokeDasharray="5 5" dot={false} name="Predicció" />
+
+              {/* Optional per-model lines */}
+              {models && models.map((m: any) => {
+                const key = `model_${m.name.replace(/\s+/g, '_')}`;
+                return showModels[m.name] ? (
+                  <Line key={m.name} type="monotone" dataKey={key} stroke={m.color || '#999'} strokeWidth={1.5} strokeDasharray="3 3" dot={false} name={m.name} />
+                ) : null;
+              })}
+
+              {/* Ensemble line (main) */}
+              {showEnsemble && <Line type="monotone" dataKey="predictedFuture" stroke="#a855f7" strokeWidth={2} strokeDasharray="5 5" dot={false} />}
 
               {/* Actual Weight Dots (only history) */}
               <Line
