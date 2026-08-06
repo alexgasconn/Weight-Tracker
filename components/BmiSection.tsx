@@ -179,15 +179,19 @@ const BmiSection: React.FC<BmiSectionProps> = ({ data, currentBmi }) => {
                 <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#6366f1', strokeWidth: 1, strokeDasharray: '3 3' }} />
 
                 {/* Reference Lines for Normal Range */}
-                <ReferenceLine y={25} stroke="#fbbf24" strokeDasharray="3 3" />
-                <ReferenceLine y={18.5} stroke="#34d399" strokeDasharray="3 3" />
+                <ReferenceLine y={18.5} stroke="#10b981" strokeDasharray="3 3" />
+                <ReferenceLine y={25} stroke="#f59e0b" strokeDasharray="3 3" />
 
-                {/* Background bands per BMI segment */}
+                {/* Background bands per BMI segment (use fillOpacity for consistent transparency) */}
                 {segments.map((seg, i) => (
-                  <React.Fragment key={i}>
-                    {/* @ts-ignore: Recharts runtime accepts `fill`, but TS types in this workspace disagree */}
-                    <ReferenceArea y1={seg.start} y2={seg.end} fill={`${seg.color}14`} />
-                  </React.Fragment>
+                  <ReferenceArea
+                    key={i}
+                    y1={seg.start}
+                    y2={seg.end}
+                    strokeOpacity={0}
+                    fill={seg.color}
+                    fillOpacity={0.15}
+                  />
                 ))}
 
                 {/* Rolling mean line (2-day) */}
