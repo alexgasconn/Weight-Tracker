@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import {
-  AreaChart,
-  Area,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   Tooltip,
@@ -65,14 +65,27 @@ const BmiSection: React.FC<BmiSectionProps> = ({ data, currentBmi }) => {
 
   const category = getBmiCategory(currentBmi);
 
-  // Filter data for chart (last 6 months for relevance)
+  // Filter data for chart (last 90 entries / days)
   const chartData = useMemo(() => {
-    // Take simpler slice for cleaner graph
-    return data.slice(-90).map(d => ({
+    const base = data.slice(-90).map(d => ({
       date: d.date,
       bmi: d.bmi,
       formattedDate: d.date.toLocaleDateString('ca-ES', { month: 'short', day: 'numeric' })
     }));
+
+    // Compute simple rolling mean (window = 2 samples) and category index
+    const withSmoothed = base.map((pt, i) => {
+      if (i === 0) return { ...pt, bmi_smoothed: pt.bmi };
+      const prev = base[i - 1];
+      const smooth = (pt.bmi + prev.bmi) / 2;
+      return { ...pt, bmi_smoothed: smooth };
+    });
+
+    // Attach category index based on segments for the smoothed value
+    return withSmoothed.map(pt => {
+      const idx = segments.findIndex(s => pt.bmi_smoothed >= s.start && pt.bmi_smoothed < s.end);
+      return { ...pt, categoryIndex: idx === -1 ? segments.length - 1 : idx };
+    });
   }, [data]);
 
   const CustomTooltip = ({ active, payload, label }: any) => {
@@ -159,36 +172,47 @@ const BmiSection: React.FC<BmiSectionProps> = ({ data, currentBmi }) => {
           
           <div className="h-40 w-full">
              <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData}>
-                <defs>
-                  <linearGradient id="colorBmiSimple" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1}/>
-                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
-                <XAxis 
-                  dataKey="date" 
-                  hide 
-                />
-                <YAxis 
-                  domain={['dataMin - 0.2', 'dataMax + 0.2']} 
-                  hide 
-                />
+              <LineChart data={chartData}>
+                <XAxis dataKey="date" hide />
+                <YAxis domain={["dataMin - 0.2", "dataMax + 0.2"]} hide />
                 <Tooltip content={<CustomTooltip />} cursor={{ stroke: '#6366f1', strokeWidth: 1, strokeDasharray: '3 3' }} />
-                
+
                 {/* Reference Lines for Normal Range */}
                 <ReferenceLine y={25} stroke="#fbbf24" strokeDasharray="3 3" />
                 <ReferenceLine y={18.5} stroke="#34d399" strokeDasharray="3 3" />
 
-                <Area 
-                  type="monotone" 
-                  dataKey="bmi" 
-                  stroke="#6366f1" 
-                  strokeWidth={2} 
-                  fill="url(#colorBmiSimple)" 
-                  activeDot={{ r: 4, strokeWidth: 2, stroke: '#fff', fill: '#4f46e5' }}
+                {/* Render one Line per segment color using per-segment data (breaks where value is null) */}
+                {segments.map((seg, si) => {
+                  const segData = chartData.map(pt => ({
+                    date: pt.date,
+                    bmi_smoothed: pt.categoryIndex === si ? pt.bmi_smoothed : null,
+                    formattedDate: pt.formattedDate
+                  }));
+                  return (
+                    <Line
+                      key={si}
+                      data={segData}
+                      type="monotone"
+                      dataKey="bmi_smoothed"
+                      stroke={seg.color}
+                      strokeWidth={2}
+                      dot={false}
+                      isAnimationActive={false}
+                    />
+                  );
+                })}
+
+                {/* Rolling mean line (slightly thicker and transparent to emphasize smooth) */}
+                <Line
+                  data={chartData}
+                  type="monotone"
+                  dataKey="bmi_smoothed"
+                  stroke="#11182700"
+                  strokeWidth={0}
+                  dot={{ r: 3, strokeWidth: 1, stroke: '#fff', fill: '#111827' }}
+                  activeDot={{ r: 4 }}
                 />
-              </AreaChart>
+              </LineChart>
             </ResponsiveContainer>
           </div>
            <div className="mt-2 text-center text-xs text-gray-400 flex justify-between px-2">
