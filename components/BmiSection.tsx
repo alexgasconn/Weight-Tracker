@@ -6,7 +6,8 @@ import {
   YAxis,
   Tooltip,
   ResponsiveContainer,
-  ReferenceLine
+  ReferenceLine,
+  ReferenceArea
 } from 'recharts';
 import { WeightRecord } from '../types';
 import { formatNumber } from '../utils/formatUtils';
@@ -39,7 +40,7 @@ const BmiSection: React.FC<BmiSectionProps> = ({ data, currentBmi }) => {
   // BMI Categories and Gauge Configuration
   const MIN_BMI = 15;
   const MAX_BMI = 35;
-  
+
   // Map BMI value to Angle (0 to 180 degrees)
   const mapBmiToAngle = (bmi: number) => {
     const clamped = Math.min(Math.max(bmi, MIN_BMI), MAX_BMI);
@@ -103,61 +104,61 @@ const BmiSection: React.FC<BmiSectionProps> = ({ data, currentBmi }) => {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden w-full">
       <div className="bg-gray-50/50 border-b border-gray-100 px-6 py-4">
-          <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
+        <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
           </svg>
           Composició Corporal (IMC)
         </h3>
       </div>
-        
+
       <div className="p-6 flex flex-col md:flex-row gap-8 md:gap-12 items-center">
-        
+
         {/* Gauge Section */}
         <div className="flex-1 flex flex-col items-center justify-center min-w-[280px]">
-            <div className="relative w-full max-w-[300px] aspect-[2/1] mb-2">
-                <svg className="w-full h-full overflow-visible" viewBox="0 0 200 110">
-                    {/* Render Segments */}
-                    {segments.map((seg, i) => (
-                      <path
-                        key={i}
-                        d={describeArc(100, 100, 85, mapBmiToAngle(seg.start), mapBmiToAngle(seg.end))}
-                        fill="none"
-                        stroke={seg.color}
-                        strokeWidth="15"
-                        strokeLinecap={i === 0 ? "round" : i === segments.length - 1 ? "round" : "butt"}
-                      />
-                    ))}
+          <div className="relative w-full max-w-[300px] aspect-[2/1] mb-2">
+            <svg className="w-full h-full overflow-visible" viewBox="0 0 200 110">
+              {/* Render Segments */}
+              {segments.map((seg, i) => (
+                <path
+                  key={i}
+                  d={describeArc(100, 100, 85, mapBmiToAngle(seg.start), mapBmiToAngle(seg.end))}
+                  fill="none"
+                  stroke={seg.color}
+                  strokeWidth="15"
+                  strokeLinecap={i === 0 ? "round" : i === segments.length - 1 ? "round" : "butt"}
+                />
+              ))}
 
-                    {/* Needle */}
-                    {/* Rotates around 100, 100. Default (0 deg) points LEFT. */}
-                    <g transform={`rotate(${currentAngle}, 100, 100)`}>
-                       {/* Line from center (100) towards left. 
+              {/* Needle */}
+              {/* Rotates around 100, 100. Default (0 deg) points LEFT. */}
+              <g transform={`rotate(${currentAngle}, 100, 100)`}>
+                {/* Line from center (100) towards left. 
                            x1=100 (center), x2=25 (end point). Length = 75. Radius is 85.
                            This keeps it inside the arc. */}
-                       <line x1="100" y1="100" x2="25" y2="100" stroke="#1f2937" strokeWidth="4" strokeLinecap="round" />
-                       <circle cx="100" cy="100" r="5" fill="#1f2937" />
-                    </g>
-                    
-                    {/* Labels on the arc (Simplified) */}
-                    <text x="15" y="115" className="text-[10px] fill-gray-400 font-medium">15</text>
-                    <text x="185" y="115" className="text-[10px] fill-gray-400 font-medium text-right">35</text>
-                </svg>
-                
-                {/* Value Display Overlay */}
-                <div className="absolute top-[60%] left-0 right-0 text-center pointer-events-none">
-                     <span className={`text-4xl font-extrabold tracking-tight ${category.textColor} drop-shadow-sm`}>
-                        {formatNumber(currentBmi)}
-                     </span>
-                </div>
-            </div>
+                <line x1="100" y1="100" x2="25" y2="100" stroke="#1f2937" strokeWidth="4" strokeLinecap="round" />
+                <circle cx="100" cy="100" r="5" fill="#1f2937" />
+              </g>
 
-            <div className="text-center mt-2">
-                <h4 className={`text-lg font-bold ${category.textColor}`}>{category.label}</h4>
-                <p className="text-xs text-gray-500 font-medium bg-gray-100 px-2 py-1 rounded-full inline-block mt-1">
-                  Rang òptim: 18.5 - 24.9
-                </p>
+              {/* Labels on the arc (Simplified) */}
+              <text x="15" y="115" className="text-[10px] fill-gray-400 font-medium">15</text>
+              <text x="185" y="115" className="text-[10px] fill-gray-400 font-medium text-right">35</text>
+            </svg>
+
+            {/* Value Display Overlay */}
+            <div className="absolute top-[60%] left-0 right-0 text-center pointer-events-none">
+              <span className={`text-4xl font-extrabold tracking-tight ${category.textColor} drop-shadow-sm`}>
+                {formatNumber(currentBmi)}
+              </span>
             </div>
+          </div>
+
+          <div className="text-center mt-2">
+            <h4 className={`text-lg font-bold ${category.textColor}`}>{category.label}</h4>
+            <p className="text-xs text-gray-500 font-medium bg-gray-100 px-2 py-1 rounded-full inline-block mt-1">
+              Rang òptim: 18.5 - 24.9
+            </p>
+          </div>
         </div>
 
         {/* Divider */}
@@ -166,12 +167,12 @@ const BmiSection: React.FC<BmiSectionProps> = ({ data, currentBmi }) => {
         {/* History Chart Section */}
         <div className="flex-1 w-full min-w-[280px]">
           <div className="flex justify-between items-center mb-4">
-              <h4 className="text-sm font-bold text-gray-600">Evolució recent</h4>
-              <div className="text-xs text-gray-400">Últims 90 dies</div>
+            <h4 className="text-sm font-bold text-gray-600">Evolució recent</h4>
+            <div className="text-xs text-gray-400">Últims 90 dies</div>
           </div>
-          
+
           <div className="h-40 w-full">
-             <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%">
               <LineChart data={chartData}>
                 <XAxis dataKey="date" hide />
                 <YAxis domain={["dataMin - 0.2", "dataMax + 0.2"]} hide />
@@ -181,44 +182,28 @@ const BmiSection: React.FC<BmiSectionProps> = ({ data, currentBmi }) => {
                 <ReferenceLine y={25} stroke="#fbbf24" strokeDasharray="3 3" />
                 <ReferenceLine y={18.5} stroke="#34d399" strokeDasharray="3 3" />
 
-                {/* Render one Line per segment color using per-segment data (breaks where value is null) */}
-                {segments.map((seg, si) => {
-                  const segData = chartData.map(pt => ({
-                    date: pt.date,
-                    bmi_smoothed: pt.categoryIndex === si ? pt.bmi_smoothed : null,
-                    formattedDate: pt.formattedDate
-                  }));
-                  return (
-                    <Line
-                      key={si}
-                      data={segData}
-                      type="monotone"
-                      dataKey="bmi_smoothed"
-                      stroke={seg.color}
-                      strokeWidth={2}
-                      dot={false}
-                      isAnimationActive={false}
-                    />
-                  );
-                })}
+                {/* Background bands per BMI segment */}
+                {segments.map((seg, i) => (
+                  <ReferenceArea key={i} y1={seg.start} y2={seg.end} strokeOpacity={0} fill={seg.color} fillOpacity={0.08} />
+                ))}
 
-                {/* Rolling mean line (slightly thicker and transparent to emphasize smooth) */}
+                {/* Rolling mean line (2-day) */}
                 <Line
                   data={chartData}
                   type="monotone"
                   dataKey="bmi_smoothed"
-                  stroke="#11182700"
-                  strokeWidth={0}
-                  dot={{ r: 3, strokeWidth: 1, stroke: '#fff', fill: '#111827' }}
+                  stroke="#4f46e5"
+                  strokeWidth={2}
+                  dot={false}
                   activeDot={{ r: 4 }}
                 />
               </LineChart>
             </ResponsiveContainer>
           </div>
-           <div className="mt-2 text-center text-xs text-gray-400 flex justify-between px-2">
-              <span>{chartData[0]?.formattedDate}</span>
-              <span>{chartData[chartData.length-1]?.formattedDate}</span>
-           </div>
+          <div className="mt-2 text-center text-xs text-gray-400 flex justify-between px-2">
+            <span>{chartData[0]?.formattedDate}</span>
+            <span>{chartData[chartData.length - 1]?.formattedDate}</span>
+          </div>
         </div>
 
       </div>
