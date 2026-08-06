@@ -184,7 +184,10 @@ const BmiSection: React.FC<BmiSectionProps> = ({ data, currentBmi }) => {
 
                 {/* Background bands per BMI segment */}
                 {segments.map((seg, i) => (
-                  <ReferenceArea key={i} y1={seg.start} y2={seg.end} strokeOpacity={0} fill={seg.color} fillOpacity={0.08} />
+                  <React.Fragment key={i}>
+                    {/* @ts-ignore: Recharts runtime accepts `fill`, but TS types in this workspace disagree */}
+                    <ReferenceArea y1={seg.start} y2={seg.end} fill={`${seg.color}14`} />
+                  </React.Fragment>
                 ))}
 
                 {/* Rolling mean line (2-day) */}
